@@ -1,0 +1,23 @@
+
+server:
+  port: 9999
+  error:
+    include-binding-errors: always
+    include-message: always
+
+spring:
+  application:
+    name: security-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://postgres-db:5432/checker
+#    url: jdbc:postgresql://localhost:5432/checker
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQL94Dialect
+  flyway:
+    enabled: false
+

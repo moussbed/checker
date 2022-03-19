@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+
+   discovery-service:
+     image: moussbed/checker-discovery:latest
+     ports:
+       - "8761:8761"
+
+   gateway-service:
+     image: moussbed/checker-gateway:latest
+     ports:
+       - "9000:9000"
+       - '5005:5005'
+     environment:
+       - EUREKA_SERVER=http://discovery-service:8761/eureka
+       - SECRET=${SECRET}
+       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+     depends_on:
+       discovery-service:
+         condition: service_started
+
+   security-service:
+     image: moussbed/checker-security:latest
+     ports:
+       - "9999:9999"
+     environment:
+       - EUREKA_SERVER=http://discovery-service:8761/eureka
+       - SECRET=${SECRET}
+       - POSTGRES_USER=${POSTGRES_USER}
+       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+     depends_on:
+       - discovery-service
+       - postgres-db
+
+   directory-service:
+      image: moussbed/checker-directory:latest
+      ports:
+        - "8070:8080"
+        - '5002:5002'
+      environment:
+        - EUREKA_SERVER=http://discovery-service:8761/eureka
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5002
+      depends_on:
+        - discovery-service
+        - postgres-db
+
+   backend-service:
+      image: moussbed/checker-backend:latest
+      ports:
+        - "8090:8090"
+        - '5001:5001'
+      environment:
+        - EUREKA_SERVER=http://discovery-service:8761/eureka
+        - SECRET=${SECRET}
+        - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5001
+      depends_on:
+        discovery-service:
+          condition: service_started
+
+   postgres-db:
+     container_name: postgres-db
+     image: postgres
+     environment:
+       POSTGRES_USER: ${POSTGRES_USER}
+       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+       POSTGRES_DB: checker
+       PGDATA: /data/postgres
+     volumes:
+       - postgres:/data/postgres
+     ports:
+       - "5432:5432"
+     restart: unless-stopped
+
+
+volumes:
+  postgres:

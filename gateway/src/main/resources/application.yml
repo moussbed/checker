@@ -1,0 +1,24 @@
+spring:
+   cloud:
+     gateway:
+       routes:
+         - id: backend
+           uri: lb://BACKEND-SERVICE
+           predicates:
+             - Path= /backend/**
+           filters:
+             - JwtFilter=RSA256,HS256
+
+         - id: directory
+           uri: lb://DIRECTORY-SERVICE
+           predicates:
+             - Path= /avatars/** , /faculties/** , /students/**
+           filters:
+             - JwtFilter=RSA256,HS256
+
+         - id: security
+           uri: lb://SECURITY-SERVICE
+           predicates:
+             - Path= /authentication/** , /login/**
+
+
